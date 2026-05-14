@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0866ff" />
+<title>Feed Studio — Carousel · Grid · Collage</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; overscroll-behavior: none; touch-action: manipulation; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+    background: #f4f6fa;
+    color: #1a1d24;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    line-height: 1.45;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f1115; color: #e7e9ee; }
+    .card { background: #181c23 !important; border-color: #262b35 !important; }
+    .chip, .num-btn { background: #1f242d !important; border-color: #2a3140 !important; color: #cdd2dc !important; }
+    .chip.active { background: #0866ff !important; border-color: #0866ff !important; color: #fff !important; }
+    .dropzone { background: #181c23 !important; border-color: #2a3140 !important; }
+    .dropzone.over { background: #1a2536 !important; border-color: #0866ff !important; }
+    .meta, .header-sub, .hint { color: #8b94a7 !important; }
+    .btn-ghost { color: #cdd2dc !important; border-color: #2a3140 !important; }
+    .stage { background: #0a0c10 !important; }
+    .slide-card, .grid-cell-preview, .layout-option { background: #181c23 !important; border-color: #262b35 !important; }
+    .num-btn:hover { background: #2a3140 !important; }
+    .tabs { background: #181c23 !important; border-color: #262b35 !important; }
+    .tab { color: #8b94a7; }
+    .tab.active { background: #0866ff !important; color: #fff !important; }
+    input[type=range], input[type=number] { accent-color: #0866ff; }
+    input[type=color] { background: #1f242d; border-color: #2a3140; }
+    .warn { background: #3a2a0e !important; color: #ffd591 !important; border-color: #5c4014 !important; }
+    .bg-swatch { border-color: #2a3140 !important; }
+    .layout-option.active { background: #0d2547 !important; border-color: #0866ff !important; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 80px; }
+
+  /* Header */
+  header { margin-bottom: 18px; }
+  h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #ff4477, #0866ff);
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white; font-weight: 900; font-size: 16px;
+    box-shadow: 0 2px 8px rgba(255, 68, 119, 0.3);
+  }
+  .header-sub { color: #5a6172; font-size: 13px; margin: 0; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #e5e8ee;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 18px;
+    position: sticky;
+    top: 8px;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+  }
+  .tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 10px 6px;
+    border-radius: 9px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    color: #5a6172;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .tab svg { width: 14px; height: 14px; }
+  .tab.active {
+    background: linear-gradient(135deg, #ff4477, #0866ff);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(8, 102, 255, 0.25);
+  }
+
+  /* Cards */
+  .card {
+    background: #fff;
+    border: 1px solid #e5e8ee;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: #5a6172;
+  }
+
+  /* Chips, num controls */
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .chip {
+    border: 1px solid #e0e4ec;
+    background: #f8fafd;
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: #1a1d24;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .chip:hover { border-color: #0866ff; }
+  .chip.active {
+    background: #0866ff;
+    border-color: #0866ff;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(8, 102, 255, 0.25);
+  }
+  .num-controls { display: flex; align-items: center; gap: 8px; }
+  .num-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    border: 1px solid #e0e4ec;
+    background: #f8fafd;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    color: #1a1d24;
+  }
+  .num-btn:hover { background: #e8eef8; }
+  .num-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .num-val {
+    min-width: 28px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 800;
+    color: #0866ff;
+  }
+  .hint { font-size: 12px; color: #5a6172; margin-top: 8px; }
+
+  /* Dropzone */
+  .dropzone {
+    display: block;
+    width: 100%;
+    border: 2px dashed #cbd2dd;
+    background: #f8fafd;
+    border-radius: 14px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .dropzone.over { background: #e8f1ff; border-color: #0866ff; }
+  .dropzone-icon {
+    width: 48px; height: 48px;
+    margin: 0 auto 10px;
+    background: linear-gradient(135deg, #ff4477, #0866ff);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    box-shadow: 0 6px 16px rgba(255, 68, 119, 0.25);
+  }
+  .dropzone-icon svg { width: 24px; height: 24px; }
+  .dropzone-text { font-weight: 600; font-size: 15px; }
+  .dropzone-sub { font-size: 12px; color: #5a6172; margin-top: 4px; }
+  .hidden-input { display: none; }
+
+  /* Stage (image preview with crop overlay) */
+  .stage {
+    position: relative;
+    background: #e8eaef;
+    border-radius: 12px;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  .stage-img { display: block; width: 100%; height: auto; }
+  .stage-mask { position: absolute; inset: 0; pointer-events: none; }
+  .crop-box {
+    position: absolute;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+    cursor: grab;
+    pointer-events: auto;
+    box-sizing: border-box;
+  }
+  .crop-box.dragging { cursor: grabbing; }
+  .divider {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 0;
+    border-left: 1.5px dashed rgba(255,255,255,0.9);
+    pointer-events: none;
+  }
+  .divider-h {
+    position: absolute;
+    left: 0; right: 0;
+    height: 0;
+    border-top: 1.5px dashed rgba(255,255,255,0.9);
+    pointer-events: none;
+  }
+
+  /* Slides strip */
+  .slides-strip {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(80px, 1fr);
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 2px 12px;
+    scrollbar-width: thin;
+  }
+  .slide-card {
+    background: #fff;
+    border: 1px solid #e5e8ee;
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: center;
+    font-size: 11px;
+    color: #5a6172;
+    padding-bottom: 4px;
+  }
+  .slide-card img { display: block; width: 100%; height: auto; }
+  .slide-card-num { padding: 4px 0 0; font-weight: 700; color: #1a1d24; }
+
+  /* Grid preview - IG-style feed */
+  .ig-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: #d9dde5;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 2px;
+  }
+  .grid-cell-preview {
+    position: relative;
+    aspect-ratio: 1;
+    background: #fff;
+    overflow: hidden;
+  }
+  .grid-cell-preview img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .grid-cell-num {
+    position: absolute;
+    top: 4px; left: 4px;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Collage layouts picker */
+  .layouts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 8px;
+  }
+  .layout-option {
+    border: 1.5px solid #e0e4ec;
+    background: #fff;
+    border-radius: 10px;
+    padding: 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .layout-option:hover { border-color: #0866ff; }
+  .layout-option.active {
+    border-color: #0866ff;
+    background: #e8f1ff;
+    box-shadow: 0 4px 12px rgba(8, 102, 255, 0.15);
+  }
+  .layout-preview {
+    aspect-ratio: 1;
+    background: #f0f3f8;
+    border-radius: 6px;
+    position: relative;
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+  .layout-cell-mock {
+    position: absolute;
+    background: linear-gradient(135deg, #ff4477, #0866ff);
+    border-radius: 2px;
+  }
+  .layout-option-name { font-size: 11px; font-weight: 600; }
+
+  /* Collage canvas */
+  .collage-canvas-wrap {
+    background: #f0f3f8;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+  }
+  .collage-canvas-wrap canvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+  }
+
+  /* BG swatches */
+  .bg-swatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .bg-swatch {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 2px solid #e0e4ec;
+    cursor: pointer;
+    position: relative;
+  }
+  .bg-swatch.active::after {
+    content: '✓';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-weight: 900;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+  .bg-swatch.light.active::after { color: #1a1d24; text-shadow: none; }
+  input[type=color] {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 2px solid #e0e4ec;
+    padding: 0;
+    cursor: pointer;
+    background: #fff;
+  }
+
+  /* Photo strip (uploaded photos for collage) */
+  .photo-strip {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 68px;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 2px;
+  }
+  .photo-thumb {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1.5px solid #e5e8ee;
+  }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-thumb-remove {
+    position: absolute;
+    top: 2px; right: 2px;
+    width: 18px; height: 18px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .photo-thumb-idx {
+    position: absolute;
+    bottom: 2px; left: 2px;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* Buttons */
+  .actions {
+    display: flex; gap: 8px; margin-top: 12px;
+  }
+  .btn {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s;
+    flex: 1;
+  }
+  .btn:active { opacity: 0.7; }
+  .btn-primary {
+    background: linear-gradient(135deg, #ff4477, #0866ff);
+    color: white;
+    box-shadow: 0 4px 12px rgba(8, 102, 255, 0.25);
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid #d6dae3;
+    color: #5a6172;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Misc */
+  .warn {
+    background: #fff7e6;
+    border: 1px solid #ffd591;
+    color: #8a5a00;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12px;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .info-line {
+    font-size: 12px;
+    color: #5a6172;
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+  }
+  .stack { display: flex; flex-direction: column; gap: 14px; }
+  .control-row {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+  }
+  .control-row label { font-size: 13px; font-weight: 600; min-width: 70px; }
+  .control-row input[type=range] { flex: 1; min-width: 100px; }
+  .footer-note {
+    text-align: center;
+    font-size: 11px;
+    color: #5a6172;
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1><span class="logo">FS</span>Feed Studio</h1>
+    <p class="header-sub">Seamless carousels, multi-post grids, and photo collages — all client-side.</p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-mode="carousel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 12h10M7 12l3-3m-3 3l3 3M17 12l-3-3m3 3l-3 3"/></svg>
+      Carousel
+    </button>
+    <button class="tab" data-mode="grid">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/></svg>
+      Grid
+    </button>
+    <button class="tab" data-mode="collage">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+      Collage
+    </button>
+  </nav>
+
+  <!-- ===================== CAROUSEL MODE ===================== -->
+  <section class="mode" id="modeCarousel">
+
+    <div class="card">
+      <h2>1. Aspect per slide</h2>
+      <div class="row" id="cAspectRow"></div>
+      <p class="hint">1:1 is safer everywhere. 4:5 takes more screen and looks taller in feed.</p>
+    </div>
+
+    <div class="card">
+      <h2>2. Number of slides</h2>
+      <div class="num-controls">
+        <button class="num-btn" id="cSlidesMinus">−</button>
+        <span class="num-val" id="cSlidesVal">3</span>
+        <button class="num-btn" id="cSlidesPlus">+</button>
+        <span class="hint" style="margin-left:12px;">2–10 slides</span>
+      </div>
+      <p class="hint" id="cTargetInfo"></p>
+    </div>
+
+    <div class="card">
+      <h2>3. Upload your wide photo</h2>
+      <label class="dropzone" id="cDropzone" for="cFileInput">
+        <div class="dropzone-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="dropzone-text">Tap to add a photo</div>
+        <div class="dropzone-sub">Wider is better. Panoramas, group shots, landscapes.</div>
+      </label>
+      <input type="file" id="cFileInput" class="hidden-input" accept="image/*" />
+      <div id="cWarnBox" class="warn" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="cPreviewCard" style="display:none;">
+      <h2>4. Position the crop</h2>
+      <div class="stage" id="cStage">
+        <img class="stage-img" id="cStageImg" alt="" />
+        <div class="stage-mask">
+          <div class="crop-box" id="cCropBox"></div>
+        </div>
+      </div>
+      <div class="info-line">
+        <span id="cCropInfo">—</span>
+        <button class="num-btn" style="width:auto; padding:0 10px; font-size:12px;" id="cCenterBtn">Center</button>
+      </div>
+    </div>
+
+    <div class="card" id="cSlidesCard" style="display:none;">
+      <h2>5. Preview &amp; download</h2>
+      <div class="slides-strip" id="cSlidesStrip"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="cRegenBtn">Regenerate</button>
+        <button class="btn btn-primary" id="cDownloadBtn">Download all</button>
+      </div>
+      <p class="hint" style="text-align:center; margin-top:10px;">
+        Upload to IG/FB <strong>in number order</strong>: slide 1 first, slide 2 second, etc.
+      </p>
+    </div>
+
+  </section>
+
+  <!-- ===================== GRID MODE ===================== -->
+  <section class="mode" id="modeGrid" hidden>
+
+    <div class="card">
+      <h2>1. Grid size</h2>
+      <div class="row">
+        <span class="hint" style="margin:0; min-width:50px;">Columns</span>
+        <div class="num-controls">
+          <button class="num-btn" id="gColsMinus">−</button>
+          <span class="num-val" id="gColsVal">3</span>
+          <button class="num-btn" id="gColsPlus">+</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <span class="hint" style="margin:0; min-width:50px;">Rows</span>
+        <div class="num-controls">
+          <button class="num-btn" id="gRowsMinus">−</button>
+          <span class="num-val" id="gRowsVal">3</span>
+          <button class="num-btn" id="gRowsPlus">+</button>
+        </div>
+      </div>
+      <p class="hint" id="gTargetInfo"></p>
+    </div>
+
+    <div class="card">
+      <h2>2. Upload your image</h2>
+      <label class="dropzone" id="gDropzone" for="gFileInput">
+        <div class="dropzone-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="dropzone-text">Tap to add a photo</div>
+        <div class="dropzone-sub">Best with a tall portrait or square design.</div>
+      </label>
+      <input type="file" id="gFileInput" class="hidden-input" accept="image/*" />
+      <div id="gWarnBox" class="warn" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="gPreviewCard" style="display:none;">
+      <h2>3. Position the crop</h2>
+      <div class="stage" id="gStage">
+        <img class="stage-img" id="gStageImg" alt="" />
+        <div class="stage-mask">
+          <div class="crop-box" id="gCropBox"></div>
+        </div>
+      </div>
+      <div class="info-line">
+        <span id="gCropInfo">—</span>
+        <button class="num-btn" style="width:auto; padding:0 10px; font-size:12px;" id="gCenterBtn">Center</button>
+      </div>
+    </div>
+
+    <div class="card" id="gFeedCard" style="display:none;">
+      <h2>4. Feed preview</h2>
+      <p class="hint" style="margin-top:0;">This is how your profile will look. The number is the <strong>posting order</strong>.</p>
+      <div class="ig-grid" id="gFeedPreview"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="gRegenBtn">Regenerate</button>
+        <button class="btn btn-primary" id="gDownloadBtn">Download all</button>
+      </div>
+      <p class="hint" style="text-align:center; margin-top:10px;">
+        Upload to Instagram <strong>in number order</strong>: file 01 first, last number is most recent.
+      </p>
+    </div>
+
+  </section>
+
+  <!-- ===================== COLLAGE MODE ===================== -->
+  <section class="mode" id="modeCollage" hidden>
+
+    <div class="card">
+      <h2>1. Layout</h2>
+      <div class="layouts-grid" id="kLayouts"></div>
+    </div>
+
+    <div class="card">
+      <h2>2. Add photos</h2>
+      <p class="hint" style="margin-top:0;" id="kPhotosHint">Add photos in the order you want them placed.</p>
+      <label class="dropzone" id="kDropzone" for="kFileInput" style="padding:18px;">
+        <div class="dropzone-icon" style="width:40px;height:40px;margin-bottom:6px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="dropzone-text" style="font-size:14px;">Tap to add photos</div>
+      </label>
+      <input type="file" id="kFileInput" class="hidden-input" accept="image/*" multiple />
+      <div class="photo-strip" id="kPhotoStrip" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>3. Style</h2>
+      <div class="stack">
+        <div class="control-row">
+          <label>Aspect</label>
+          <div class="row" id="kAspectRow"></div>
+        </div>
+        <div class="control-row">
+          <label>Gap</label>
+          <input type="range" id="kGap" min="0" max="60" value="8" step="1" />
+          <span class="num-val" id="kGapVal" style="font-size:14px; min-width:36px;">8</span>
+        </div>
+        <div class="control-row">
+          <label>Background</label>
+          <div class="bg-swatches" id="kBgSwatches"></div>
+          <input type="color" id="kBgCustom" value="#ffffff" title="Custom color" />
+        </div>
+        <div class="control-row">
+          <label>Rounding</label>
+          <input type="range" id="kRound" min="0" max="80" value="0" step="1" />
+          <span class="num-val" id="kRoundVal" style="font-size:14px; min-width:36px;">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="kPreviewCard" style="display:none;">
+      <h2>4. Preview</h2>
+      <div class="collage-canvas-wrap">
+        <canvas id="kCanvas"></canvas>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="kResetBtn">Clear photos</button>
+        <button class="btn btn-primary" id="kDownloadBtn">Download collage</button>
+      </div>
+    </div>
+
+  </section>
+
+  <p class="footer-note">All processing happens in your browser. Nothing is uploaded.</p>
+</div>
+
+<script>
+// ============================================================
+//  Shared helpers
+// ============================================================
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function pointerXY(e) {
+  if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  return { x: e.clientX, y: e.clientY };
+}
+async function loadBitmap(file) {
+  try {
+    return await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch (err) {
+    return await new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image not supported')); };
+      img.src = url;
+    });
+  }
+}
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ============================================================
+//  Tab switching
+// ============================================================
+(() => {
+  const tabs = document.querySelectorAll('.tab');
+  const modes = document.querySelectorAll('.mode');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const m = tab.dataset.mode;
+      tabs.forEach(t => t.classList.toggle('active', t === tab));
+      modes.forEach(s => s.hidden = (s.id !== 'mode' + m[0].toUpperCase() + m.slice(1)));
+    });
+  });
+})();
+
+// ============================================================
+//  CAROUSEL MODE
+// ============================================================
+(() => {
+  const ASPECTS = [
+    { id: 'square', label: '1:1 Square', w: 1080, h: 1080 },
+    { id: 'portrait', label: '4:5 Portrait', w: 1080, h: 1350 },
+  ];
+  let aspect = ASPECTS[0];
+  let slides = 3;
+  let bitmap = null;
+  let srcURL = null;
+  let cropX = 0, cropY = 0;
+  let generated = [];
+
+  const $ = (id) => document.getElementById(id);
+  const aspectRow = $('cAspectRow');
+  const slidesVal = $('cSlidesVal');
+  const slidesMinus = $('cSlidesMinus');
+  const slidesPlus = $('cSlidesPlus');
+  const targetInfo = $('cTargetInfo');
+  const fileInput = $('cFileInput');
+  const dropzone = $('cDropzone');
+  const stageEl = $('cStage');
+  const stageImg = $('cStageImg');
+  const cropBox = $('cCropBox');
+  const cropInfo = $('cCropInfo');
+  const previewCard = $('cPreviewCard');
+  const slidesCard = $('cSlidesCard');
+  const slidesStrip = $('cSlidesStrip');
+  const warnBox = $('cWarnBox');
+
+  // Build aspect chips
+  ASPECTS.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip' + (i === 0 ? ' active' : '');
+    btn.textContent = a.label;
+    btn.addEventListener('click', () => {
+      aspect = a;
+      aspectRow.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      updateInfo(); refreshCrop(true);
+    });
+    aspectRow.appendChild(btn);
+  });
+
+  slidesMinus.addEventListener('click', () => { if (slides > 2) { slides--; updateSlidesUI(); } });
+  slidesPlus.addEventListener('click', () => { if (slides < 10) { slides++; updateSlidesUI(); } });
+
+  function updateSlidesUI() {
+    slidesVal.textContent = slides;
+    slidesMinus.disabled = slides <= 2;
+    slidesPlus.disabled = slides >= 10;
+    updateInfo(); refreshCrop(true);
+  }
+
+  function updateInfo() {
+    const r = (slides * aspect.w) / aspect.h;
+    const rStr = Math.abs(r - Math.round(r)) < 0.01 ? Math.round(r) + ':1' : r.toFixed(2) + ':1';
+    targetInfo.innerHTML = `Target source ratio: <strong>${rStr}</strong> · Output: <strong>${aspect.w}×${aspect.h}</strong> per slide`;
+  }
+  updateSlidesUI();
+
+  // Upload
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  });
+  ['dragenter','dragover'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('over'); }));
+  dropzone.addEventListener('drop', e => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  async function handleFile(file) {
+    if (!file.type.startsWith('image/')) return;
+    try {
+      bitmap = await loadBitmap(file);
+      if (srcURL) URL.revokeObjectURL(srcURL);
+      srcURL = URL.createObjectURL(file);
+      stageImg.src = srcURL;
+      previewCard.style.display = 'block';
+      refreshCrop(true);
+    } catch (err) {
+      alert('Could not load that image: ' + err.message);
+    }
+  }
+
+  function getCropDims() {
+    if (!bitmap) return { w:1, h:1, mode:'horizontal' };
+    const srcW = bitmap.width, srcH = bitmap.height;
+    const target = (slides * aspect.w) / aspect.h;
+    const srcR = srcW / srcH;
+    if (srcR >= target) {
+      return { w: (srcH * target) / srcW, h: 1, pxW: srcH * target, pxH: srcH, mode: 'horizontal' };
+    } else {
+      return { w: 1, h: (srcW / target) / srcH, pxW: srcW, pxH: srcW / target, mode: 'vertical' };
+    }
+  }
+
+  function refreshCrop(reset) {
+    if (!bitmap) return;
+    const d = getCropDims();
+    if (reset) { cropX = (1 - d.w) / 2; cropY = (1 - d.h) / 2; }
+    else { cropX = clamp(cropX, 0, 1 - d.w); cropY = clamp(cropY, 0, 1 - d.h); }
+    renderCrop();
+    checkWarning();
+    generate();
+  }
+
+  function renderCrop() {
+    if (!bitmap) return;
+    const d = getCropDims();
+    const sw = stageEl.clientWidth;
+    const sh = stageImg.clientHeight || stageEl.clientHeight;
+    cropBox.style.width = (d.w * sw) + 'px';
+    cropBox.style.height = (d.h * sh) + 'px';
+    cropBox.style.left = (cropX * sw) + 'px';
+    cropBox.style.top = (cropY * sh) + 'px';
+    Array.from(cropBox.querySelectorAll('.divider')).forEach(x => x.remove());
+    for (let i = 1; i < slides; i++) {
+      const dv = document.createElement('div');
+      dv.className = 'divider';
+      dv.style.left = (i / slides * 100) + '%';
+      cropBox.appendChild(dv);
+    }
+    cropInfo.textContent = `Crop: ${Math.round(d.pxW)}×${Math.round(d.pxH)}px · drag to reposition`;
+  }
+
+  function checkWarning() {
+    if (!bitmap) return;
+    const d = getCropDims();
+    if (d.mode === 'vertical') {
+      const lost = Math.round((1 - d.h) * 100);
+      warnBox.style.display = 'block';
+      warnBox.innerHTML = `Image isn't wide enough for ${slides} slides. ~${lost}% will be cropped from top/bottom. Consider fewer slides.`;
+    } else if (d.w < 0.6) {
+      const lost = Math.round((1 - d.w) * 100);
+      warnBox.style.display = 'block';
+      warnBox.innerHTML = `Image is much wider than needed. ~${lost}% will be cropped from sides. Try more slides.`;
+    } else {
+      warnBox.style.display = 'none';
+    }
+  }
+
+  // Drag
+  let dragStart = null;
+  cropBox.addEventListener('mousedown', startDrag);
+  cropBox.addEventListener('touchstart', startDrag, { passive: false });
+  function startDrag(e) {
+    e.preventDefault();
+    const p = pointerXY(e);
+    dragStart = { x: p.x, y: p.y, cx: cropX, cy: cropY };
+    cropBox.classList.add('dragging');
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('touchmove', onDrag, { passive: false });
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+  }
+  function onDrag(e) {
+    if (!dragStart) return;
+    e.preventDefault();
+    const p = pointerXY(e);
+    const sw = stageEl.clientWidth, sh = stageImg.clientHeight || stageEl.clientHeight;
+    const d = getCropDims();
+    cropX = clamp(dragStart.cx + (p.x - dragStart.x) / sw, 0, 1 - d.w);
+    cropY = clamp(dragStart.cy + (p.y - dragStart.y) / sh, 0, 1 - d.h);
+    renderCrop();
+  }
+  function endDrag() {
+    if (!dragStart) return;
+    dragStart = null;
+    cropBox.classList.remove('dragging');
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('touchmove', onDrag);
+    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('touchend', endDrag);
+    if (bitmap) generate();
+  }
+
+  $('cCenterBtn').addEventListener('click', () => refreshCrop(true));
+  window.addEventListener('resize', () => renderCrop());
+  stageImg.addEventListener('load', () => renderCrop());
+
+  // Generate
+  async function generate() {
+    if (!bitmap) return;
+    generated.forEach(g => URL.revokeObjectURL(g.url));
+    generated = [];
+    const d = getCropDims();
+    const srcW = bitmap.width, srcH = bitmap.height;
+    const px = cropX * srcW, py = cropY * srcH;
+    const pw = d.w * srcW, ph = d.h * srcH;
+    const sliceW = pw / slides;
+
+    slidesCard.style.display = 'block';
+    slidesStrip.innerHTML = '';
+
+    for (let i = 0; i < slides; i++) {
+      const cv = document.createElement('canvas');
+      cv.width = aspect.w; cv.height = aspect.h;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(bitmap, px + i * sliceW, py, sliceW, ph, 0, 0, aspect.w, aspect.h);
+      const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.92));
+      const url = URL.createObjectURL(blob);
+      generated.push({ blob, url, num: i + 1 });
+
+      const card = document.createElement('div');
+      card.className = 'slide-card';
+      card.innerHTML = `<img src="${url}"/><div class="slide-card-num">${i+1}/${slides}</div>`;
+      slidesStrip.appendChild(card);
+    }
+  }
+
+  $('cRegenBtn').addEventListener('click', generate);
+  $('cDownloadBtn').addEventListener('click', async () => {
+    const total = String(slides).padStart(2,'0');
+    for (const g of generated) {
+      downloadBlob(g.blob, `carousel-${String(g.num).padStart(2,'0')}-of-${total}.jpg`);
+      await new Promise(r => setTimeout(r, 220));
+    }
+  });
+})();
+
+// ============================================================
+//  GRID MODE
+// ============================================================
+(() => {
+  let cols = 3, rows = 3;
+  let bitmap = null;
+  let srcURL = null;
+  let cropX = 0, cropY = 0;
+  let generated = [];
+
+  const $ = (id) => document.getElementById(id);
+  const colsVal = $('gColsVal'), rowsVal = $('gRowsVal');
+  const fileInput = $('gFileInput');
+  const dropzone = $('gDropzone');
+  const stageEl = $('gStage');
+  const stageImg = $('gStageImg');
+  const cropBox = $('gCropBox');
+  const cropInfo = $('gCropInfo');
+  const previewCard = $('gPreviewCard');
+  const feedCard = $('gFeedCard');
+  const feedPreview = $('gFeedPreview');
+  const targetInfo = $('gTargetInfo');
+  const warnBox = $('gWarnBox');
+
+  $('gColsMinus').addEventListener('click', () => { if (cols > 2) { cols--; updateUI(); } });
+  $('gColsPlus').addEventListener('click', () => { if (cols < 5) { cols++; updateUI(); } });
+  $('gRowsMinus').addEventListener('click', () => { if (rows > 1) { rows--; updateUI(); } });
+  $('gRowsPlus').addEventListener('click', () => { if (rows < 8) { rows++; updateUI(); } });
+
+  function updateUI() {
+    colsVal.textContent = cols;
+    rowsVal.textContent = rows;
+    $('gColsMinus').disabled = cols <= 2;
+    $('gColsPlus').disabled = cols >= 5;
+    $('gRowsMinus').disabled = rows <= 1;
+    $('gRowsPlus').disabled = rows >= 8;
+    feedPreview.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    const total = rows * cols;
+    const r = cols / rows; // cell is square so target ratio = cols / rows
+    const rStr = Math.abs(r - Math.round(r)) < 0.01 ? Math.round(r) + ':1' : r.toFixed(2) + ':1';
+    targetInfo.innerHTML = `${total} posts · Target source ratio: <strong>${rStr}</strong> · Each post: <strong>1080×1080</strong>`;
+    refreshCrop(true);
+  }
+  updateUI();
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  });
+  ['dragenter','dragover'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('over'); }));
+  dropzone.addEventListener('drop', e => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  async function handleFile(file) {
+    if (!file.type.startsWith('image/')) return;
+    try {
+      bitmap = await loadBitmap(file);
+      if (srcURL) URL.revokeObjectURL(srcURL);
+      srcURL = URL.createObjectURL(file);
+      stageImg.src = srcURL;
+      previewCard.style.display = 'block';
+      refreshCrop(true);
+    } catch (err) {
+      alert('Could not load that image: ' + err.message);
+    }
+  }
+
+  function getCropDims() {
+    if (!bitmap) return { w:1, h:1, mode:'horizontal' };
+    const srcW = bitmap.width, srcH = bitmap.height;
+    const target = cols / rows;
+    const srcR = srcW / srcH;
+    if (srcR >= target) {
+      return { w: (srcH * target) / srcW, h: 1, pxW: srcH * target, pxH: srcH, mode: 'horizontal' };
+    } else {
+      return { w: 1, h: (srcW / target) / srcH, pxW: srcW, pxH: srcW / target, mode: 'vertical' };
+    }
+  }
+
+  function refreshCrop(reset) {
+    if (!bitmap) return;
+    const d = getCropDims();
+    if (reset) { cropX = (1 - d.w) / 2; cropY = (1 - d.h) / 2; }
+    else { cropX = clamp(cropX, 0, 1 - d.w); cropY = clamp(cropY, 0, 1 - d.h); }
+    renderCrop();
+    checkWarning();
+    generate();
+  }
+
+  function renderCrop() {
+    if (!bitmap) return;
+    const d = getCropDims();
+    const sw = stageEl.clientWidth, sh = stageImg.clientHeight || stageEl.clientHeight;
+    cropBox.style.width = (d.w * sw) + 'px';
+    cropBox.style.height = (d.h * sh) + 'px';
+    cropBox.style.left = (cropX * sw) + 'px';
+    cropBox.style.top = (cropY * sh) + 'px';
+    Array.from(cropBox.querySelectorAll('.divider, .divider-h')).forEach(x => x.remove());
+    for (let i = 1; i < cols; i++) {
+      const dv = document.createElement('div'); dv.className = 'divider';
+      dv.style.left = (i / cols * 100) + '%';
+      cropBox.appendChild(dv);
+    }
+    for (let i = 1; i < rows; i++) {
+      const dh = document.createElement('div'); dh.className = 'divider-h';
+      dh.style.top = (i / rows * 100) + '%';
+      cropBox.appendChild(dh);
+    }
+    cropInfo.textContent = `Crop: ${Math.round(d.pxW)}×${Math.round(d.pxH)}px · drag to reposition`;
+  }
+
+  function checkWarning() {
+    if (!bitmap) return;
+    const d = getCropDims();
+    if (d.mode === 'vertical') {
+      const lost = Math.round((1 - d.h) * 100);
+      warnBox.style.display = 'block';
+      warnBox.innerHTML = `Image is narrower than ${cols}:${rows}. ~${lost}% will be cropped from top/bottom.`;
+    } else if (d.w < 0.6) {
+      const lost = Math.round((1 - d.w) * 100);
+      warnBox.style.display = 'block';
+      warnBox.innerHTML = `Image is much wider than ${cols}:${rows}. ~${lost}% will be cropped from sides.`;
+    } else {
+      warnBox.style.display = 'none';
+    }
+  }
+
+  // Drag
+  let dragStart = null;
+  cropBox.addEventListener('mousedown', startDrag);
+  cropBox.addEventListener('touchstart', startDrag, { passive: false });
+  function startDrag(e) {
+    e.preventDefault();
+    const p = pointerXY(e);
+    dragStart = { x: p.x, y: p.y, cx: cropX, cy: cropY };
+    cropBox.classList.add('dragging');
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('touchmove', onDrag, { passive: false });
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+  }
+  function onDrag(e) {
+    if (!dragStart) return;
+    e.preventDefault();
+    const p = pointerXY(e);
+    const sw = stageEl.clientWidth, sh = stageImg.clientHeight || stageEl.clientHeight;
+    const d = getCropDims();
+    cropX = clamp(dragStart.cx + (p.x - dragStart.x) / sw, 0, 1 - d.w);
+    cropY = clamp(dragStart.cy + (p.y - dragStart.y) / sh, 0, 1 - d.h);
+    renderCrop();
+  }
+  function endDrag() {
+    if (!dragStart) return;
+    dragStart = null;
+    cropBox.classList.remove('dragging');
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('touchmove', onDrag);
+    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('touchend', endDrag);
+    if (bitmap) generate();
+  }
+
+  $('gCenterBtn').addEventListener('click', () => refreshCrop(true));
+  window.addEventListener('resize', () => renderCrop());
+  stageImg.addEventListener('load', () => renderCrop());
+
+  // Generate: split into rows*cols posts.
+  // POSTING ORDER: bottom-right of grid is post #1 (oldest), top-left is post #N (newest).
+  async function generate() {
+    if (!bitmap) return;
+    generated.forEach(g => URL.revokeObjectURL(g.url));
+    generated = [];
+    const d = getCropDims();
+    const srcW = bitmap.width, srcH = bitmap.height;
+    const px = cropX * srcW, py = cropY * srcH;
+    const pw = d.w * srcW, ph = d.h * srcH;
+    const cellW = pw / cols;
+    const cellH = ph / rows;
+    const total = rows * cols;
+
+    feedCard.style.display = 'block';
+    feedPreview.innerHTML = '';
+    feedPreview.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    // Generate display-position-ordered for preview, but store also by post order
+    const cellsByDisplay = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cv = document.createElement('canvas');
+        cv.width = 1080; cv.height = 1080;
+        const ctx = cv.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(bitmap, px + c * cellW, py + r * cellH, cellW, cellH, 0, 0, 1080, 1080);
+        const blob = await new Promise(rr => cv.toBlob(rr, 'image/jpeg', 0.92));
+        const url = URL.createObjectURL(blob);
+        const postNum = total - (r * cols + c); // post number (1 = oldest = bottom-right)
+        cellsByDisplay.push({ blob, url, postNum, r, c });
+
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell-preview';
+        cell.innerHTML = `<img src="${url}"/><span class="grid-cell-num">${postNum}</span>`;
+        feedPreview.appendChild(cell);
+      }
+    }
+    // Store sorted by post number for download
+    generated = cellsByDisplay.slice().sort((a, b) => a.postNum - b.postNum);
+  }
+
+  $('gRegenBtn').addEventListener('click', generate);
+  $('gDownloadBtn').addEventListener('click', async () => {
+    const total = String(generated.length).padStart(2, '0');
+    for (const g of generated) {
+      downloadBlob(g.blob, `grid-${String(g.postNum).padStart(2,'0')}-of-${total}.jpg`);
+      await new Promise(r => setTimeout(r, 220));
+    }
+  });
+})();
+
+// ============================================================
+//  COLLAGE MODE
+// ============================================================
+(() => {
+  // Cell coords in normalized 0..1 space within the canvas
+  const LAYOUTS = [
+    { id:'2v', name:'2 side',     cells:[{x:0,y:0,w:0.5,h:1},{x:0.5,y:0,w:0.5,h:1}] },
+    { id:'2h', name:'2 stacked',  cells:[{x:0,y:0,w:1,h:0.5},{x:0,y:0.5,w:1,h:0.5}] },
+    { id:'3l', name:'1L + 2R',    cells:[{x:0,y:0,w:0.5,h:1},{x:0.5,y:0,w:0.5,h:0.5},{x:0.5,y:0.5,w:0.5,h:0.5}] },
+    { id:'3t', name:'1T + 2B',    cells:[{x:0,y:0,w:1,h:0.5},{x:0,y:0.5,w:0.5,h:0.5},{x:0.5,y:0.5,w:0.5,h:0.5}] },
+    { id:'4g', name:'2×2',        cells:[{x:0,y:0,w:0.5,h:0.5},{x:0.5,y:0,w:0.5,h:0.5},{x:0,y:0.5,w:0.5,h:0.5},{x:0.5,y:0.5,w:0.5,h:0.5}] },
+    { id:'4r', name:'4 cols',     cells:[{x:0,y:0,w:0.25,h:1},{x:0.25,y:0,w:0.25,h:1},{x:0.5,y:0,w:0.25,h:1},{x:0.75,y:0,w:0.25,h:1}] },
+    { id:'4h', name:'4 rows',     cells:[{x:0,y:0,w:1,h:0.25},{x:0,y:0.25,w:1,h:0.25},{x:0,y:0.5,w:1,h:0.25},{x:0,y:0.75,w:1,h:0.25}] },
+    { id:'5b', name:'1L + 4R',    cells:[
+      {x:0,y:0,w:0.5,h:1},
+      {x:0.5,y:0,w:0.25,h:0.5},{x:0.75,y:0,w:0.25,h:0.5},
+      {x:0.5,y:0.5,w:0.25,h:0.5},{x:0.75,y:0.5,w:0.25,h:0.5}
+    ] },
+    { id:'6g', name:'2×3',        cells:(function(){const a=[];for(let r=0;r<3;r++)for(let c=0;c<2;c++)a.push({x:c*0.5,y:r/3,w:0.5,h:1/3});return a;})() },
+    { id:'9g', name:'3×3',        cells:(function(){const a=[];for(let r=0;r<3;r++)for(let c=0;c<3;c++)a.push({x:c/3,y:r/3,w:1/3,h:1/3});return a;})() },
+  ];
+  const ASPECTS = [
+    { id: 'square', label: '1:1', w: 1080, h: 1080 },
+    { id: 'portrait', label: '4:5', w: 1080, h: 1350 },
+    { id: 'story', label: '9:16', w: 1080, h: 1920 },
+  ];
+  const BG_PRESETS = [
+    { color: '#ffffff', light: true },
+    { color: '#000000', light: false },
+    { color: '#f4f1ea', light: true },
+    { color: '#1a1d24', light: false },
+    { color: '#ff4477', light: false },
+    { color: '#0866ff', light: false },
+  ];
+
+  let layout = LAYOUTS[4]; // 2x2 default
+  let aspect = ASPECTS[0];
+  let gap = 8;
+  let round = 0;
+  let bg = BG_PRESETS[0].color;
+  let photos = []; // [{ bitmap, url, file }]
+
+  const $ = (id) => document.getElementById(id);
+  const layoutsEl = $('kLayouts');
+  const aspectRow = $('kAspectRow');
+  const swatchesEl = $('kBgSwatches');
+  const fileInput = $('kFileInput');
+  const dropzone = $('kDropzone');
+  const photoStrip = $('kPhotoStrip');
+  const canvas = $('kCanvas');
+  const previewCard = $('kPreviewCard');
+  const photosHint = $('kPhotosHint');
+  const gapInput = $('kGap');
+  const gapVal = $('kGapVal');
+  const roundInput = $('kRound');
+  const roundVal = $('kRoundVal');
+  const bgCustom = $('kBgCustom');
+  const ctx = canvas.getContext('2d');
+
+  // Build layout options
+  function makeLayoutPreview(l) {
+    const wrap = document.createElement('div');
+    wrap.className = 'layout-preview';
+    l.cells.forEach(c => {
+      const m = document.createElement('div');
+      m.className = 'layout-cell-mock';
+      m.style.left = (c.x * 100) + '%';
+      m.style.top = (c.y * 100) + '%';
+      m.style.width = `calc(${c.w * 100}% - 3px)`;
+      m.style.height = `calc(${c.h * 100}% - 3px)`;
+      m.style.margin = '1.5px';
+      wrap.appendChild(m);
+    });
+    return wrap;
+  }
+
+  LAYOUTS.forEach((l) => {
+    const opt = document.createElement('div');
+    opt.className = 'layout-option' + (l === layout ? ' active' : '');
+    opt.appendChild(makeLayoutPreview(l));
+    const name = document.createElement('div');
+    name.className = 'layout-option-name';
+    name.textContent = l.name;
+    opt.appendChild(name);
+    opt.addEventListener('click', () => {
+      layout = l;
+      layoutsEl.querySelectorAll('.layout-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      updateHint();
+      render();
+    });
+    layoutsEl.appendChild(opt);
+  });
+
+  // Aspect chips
+  ASPECTS.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip' + (i === 0 ? ' active' : '');
+    btn.textContent = a.label;
+    btn.addEventListener('click', () => {
+      aspect = a;
+      aspectRow.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    });
+    aspectRow.appendChild(btn);
+  });
+
+  // Bg swatches
+  BG_PRESETS.forEach((p, i) => {
+    const s = document.createElement('div');
+    s.className = 'bg-swatch' + (p.light ? ' light' : '') + (i === 0 ? ' active' : '');
+    s.style.background = p.color;
+    s.addEventListener('click', () => {
+      bg = p.color;
+      bgCustom.value = p.color;
+      swatchesEl.querySelectorAll('.bg-swatch').forEach(x => x.classList.remove('active'));
+      s.classList.add('active');
+      render();
+    });
+    swatchesEl.appendChild(s);
+  });
+  bgCustom.addEventListener('input', () => {
+    bg = bgCustom.value;
+    swatchesEl.querySelectorAll('.bg-swatch').forEach(x => x.classList.remove('active'));
+    render();
+  });
+
+  gapInput.addEventListener('input', () => { gap = parseInt(gapInput.value); gapVal.textContent = gap; render(); });
+  roundInput.addEventListener('input', () => { round = parseInt(roundInput.value); roundVal.textContent = round; render(); });
+
+  // Photo upload
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files.length) handleFiles(e.target.files);
+  });
+  ['dragenter','dragover'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('over'); }));
+  dropzone.addEventListener('drop', e => {
+    if (e.dataTransfer.files && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  });
+
+  async function handleFiles(fileList) {
+    for (const f of fileList) {
+      if (!f.type.startsWith('image/')) continue;
+      try {
+        const bitmap = await loadBitmap(f);
+        const url = URL.createObjectURL(f);
+        photos.push({ bitmap, url, file: f });
+      } catch (err) {
+        console.error('Could not load', f.name, err);
+      }
+    }
+    renderPhotoStrip();
+    render();
+  }
+
+  function renderPhotoStrip() {
+    photoStrip.innerHTML = '';
+    photos.forEach((p, i) => {
+      const t = document.createElement('div');
+      t.className = 'photo-thumb';
+      t.innerHTML = `<img src="${p.url}"/><span class="photo-thumb-idx">${i+1}</span><button class="photo-thumb-remove" title="Remove">×</button>`;
+      t.querySelector('.photo-thumb-remove').addEventListener('click', () => {
+        URL.revokeObjectURL(p.url);
+        photos.splice(i, 1);
+        renderPhotoStrip();
+        render();
+      });
+      photoStrip.appendChild(t);
+    });
+  }
+
+  function updateHint() {
+    const needed = layout.cells.length;
+    photosHint.innerHTML = `<strong>${layout.name}</strong> needs ${needed} photos. ${photos.length}/${needed} added.`;
+  }
+
+  function roundRectPath(ctx, x, y, w, h, r) {
+    r = Math.min(r, Math.min(w, h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function render() {
+    updateHint();
+    if (!photos.length) {
+      previewCard.style.display = 'none';
+      return;
+    }
+    previewCard.style.display = 'block';
+
+    canvas.width = aspect.w;
+    canvas.height = aspect.h;
+    const W = aspect.w, H = aspect.h;
+
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    layout.cells.forEach((cell, idx) => {
+      const photo = photos[idx % photos.length];
+      if (!photo) return;
+      // Cell rect in pixels, shrunk by gap on interior edges
+      let cx = cell.x * W;
+      let cy = cell.y * H;
+      let cw = cell.w * W;
+      let ch = cell.h * H;
+      // Interior gap: leave gap/2 on each side that's not the outer edge
+      const halfGap = gap / 2;
+      if (cell.x > 0.001) { cx += halfGap; cw -= halfGap; }
+      if (cell.y > 0.001) { cy += halfGap; ch -= halfGap; }
+      if (cell.x + cell.w < 0.999) { cw -= halfGap; }
+      if (cell.y + cell.h < 0.999) { ch -= halfGap; }
+      if (cw <= 0 || ch <= 0) return;
+
+      ctx.save();
+      if (round > 0) {
+        roundRectPath(ctx, cx, cy, cw, ch, round);
+        ctx.clip();
+      } else {
+        ctx.beginPath();
+        ctx.rect(cx, cy, cw, ch);
+        ctx.clip();
+      }
+
+      // Cover-fit photo into cell
+      const pw = photo.bitmap.width, ph = photo.bitmap.height;
+      const pr = pw / ph, cr = cw / ch;
+      let sx, sy, sw, sh;
+      if (pr > cr) {
+        // photo wider than cell -> crop sides
+        sh = ph; sw = ph * cr; sx = (pw - sw) / 2; sy = 0;
+      } else {
+        sw = pw; sh = pw / cr; sx = 0; sy = (ph - sh) / 2;
+      }
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(photo.bitmap, sx, sy, sw, sh, cx, cy, cw, ch);
+      ctx.restore();
+    });
+  }
+
+  $('kResetBtn').addEventListener('click', () => {
+    photos.forEach(p => URL.revokeObjectURL(p.url));
+    photos = [];
+    renderPhotoStrip();
+    render();
+  });
+
+  $('kDownloadBtn').addEventListener('click', () => {
+    if (!photos.length) return;
+    canvas.toBlob(blob => {
+      downloadBlob(blob, `collage-${layout.id}-${aspect.id}.jpg`);
+    }, 'image/jpeg', 0.92);
+  });
+
+  // Initial state
+  updateHint();
+})();
+</script>
+</body>
+</html>
