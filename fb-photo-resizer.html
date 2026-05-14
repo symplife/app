@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0866ff" />
+<title>FB Photo Resizer</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; overscroll-behavior: none; touch-action: manipulation; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+    background: #f4f6fa;
+    color: #1a1d24;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    line-height: 1.45;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f1115; color: #e7e9ee; }
+    .card { background: #181c23 !important; border-color: #262b35 !important; }
+    .preset { background: #1f242d !important; border-color: #2a3140 !important; color: #cdd2dc !important; }
+    .preset.active { background: #0866ff !important; border-color: #0866ff !important; color: #fff !important; }
+    .dropzone { background: #181c23 !important; border-color: #2a3140 !important; }
+    .dropzone.over { background: #1a2536 !important; border-color: #0866ff !important; }
+    .file-item { background: #181c23 !important; border-color: #262b35 !important; }
+    .meta { color: #8b94a7 !important; }
+    input[type=range] { accent-color: #0866ff; }
+    .stat { background: #1f242d !important; }
+    .btn-ghost { color: #cdd2dc !important; border-color: #2a3140 !important; }
+    .header-sub { color: #8b94a7 !important; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 80px; }
+  header { margin-bottom: 20px; }
+  h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #0866ff, #00c2ff);
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white; font-weight: 900; font-size: 18px;
+    box-shadow: 0 2px 8px rgba(8, 102, 255, 0.3);
+  }
+  .header-sub { color: #5a6172; font-size: 14px; margin: 0; }
+  .card {
+    background: #fff;
+    border: 1px solid #e5e8ee;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: #5a6172;
+  }
+  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .preset {
+    border: 1px solid #e0e4ec;
+    background: #f8fafd;
+    border-radius: 10px;
+    padding: 12px 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    color: #1a1d24;
+    font-family: inherit;
+  }
+  .preset:hover { border-color: #0866ff; }
+  .preset.active {
+    background: #0866ff;
+    border-color: #0866ff;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(8, 102, 255, 0.25);
+  }
+  .preset-name { font-weight: 700; font-size: 14px; display: block; }
+  .preset-dim { font-size: 11px; opacity: 0.75; display: block; margin-top: 2px; }
+  .quality-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+  .quality-row input[type=range] { flex: 1; }
+  .quality-val { font-weight: 700; font-size: 16px; min-width: 48px; text-align: right; color: #0866ff; }
+  .dropzone {
+    display: block;
+    width: 100%;
+    border: 2px dashed #cbd2dd;
+    background: #f8fafd;
+    border-radius: 14px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .dropzone.over { background: #e8f1ff; border-color: #0866ff; }
+  .dropzone-icon {
+    width: 56px; height: 56px;
+    margin: 0 auto 12px;
+    background: linear-gradient(135deg, #0866ff, #00c2ff);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    box-shadow: 0 6px 16px rgba(8, 102, 255, 0.25);
+  }
+  .dropzone-icon svg { width: 28px; height: 28px; }
+  .dropzone-text { font-weight: 600; font-size: 15px; }
+  .dropzone-sub { font-size: 13px; color: #5a6172; margin-top: 4px; }
+  #fileInput { display: none; }
+  .file-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .file-item {
+    background: #fff;
+    border: 1px solid #e5e8ee;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .thumb {
+    width: 56px; height: 56px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #ccc;
+    flex-shrink: 0;
+  }
+  .file-info { flex: 1; min-width: 0; }
+  .file-name {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .meta { font-size: 12px; color: #5a6172; margin-top: 2px; }
+  .meta .arrow { margin: 0 4px; opacity: 0.5; }
+  .meta .saved { color: #18a957; font-weight: 700; }
+  .file-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.7; }
+  .btn-primary {
+    background: #0866ff;
+    color: white;
+    box-shadow: 0 2px 8px rgba(8, 102, 255, 0.25);
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid #d6dae3;
+    color: #5a6172;
+  }
+  .btn-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #f0f3f8;
+    color: #5a6172;
+    border: none;
+  }
+  .btn-icon:hover { background: #e1e7f0; }
+  .actions-bar {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .actions-bar .btn { flex: 1; padding: 12px; font-size: 14px; }
+  .stat {
+    background: #f0f3f8;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+  .stat-label { color: #5a6172; }
+  .stat-val { font-weight: 700; color: #18a957; font-size: 15px; }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 30px 20px; color: #5a6172; font-size: 14px; }
+  .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1><span class="logo">FB</span>Photo Resizer</h1>
+    <p class="header-sub">Resize photos to Facebook's ideal dimensions before uploading. Keeps quality, beats FB's heavy compression.</p>
+  </header>
+
+  <div class="card">
+    <h2>1. Choose preset</h2>
+    <div class="presets" id="presets"></div>
+  </div>
+
+  <div class="card">
+    <h2>2. JPEG quality</h2>
+    <div class="quality-row">
+      <input type="range" id="quality" min="60" max="100" value="88" step="1" />
+      <span class="quality-val"><span id="qualityVal">88</span>%</span>
+    </div>
+    <p class="header-sub" style="margin-top:8px; font-size:12px;">85–92% is the sweet spot. Higher = bigger file but minimal visible gain.</p>
+  </div>
+
+  <div class="card">
+    <h2>3. Add photos</h2>
+    <label class="dropzone" id="dropzone" for="fileInput">
+      <div class="dropzone-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div class="dropzone-text">Tap to add photos</div>
+      <div class="dropzone-sub">or drag &amp; drop (JPG, PNG, WebP, HEIC*)</div>
+      <input type="file" id="fileInput" accept="image/*" multiple />
+    </label>
+
+    <div class="file-list" id="fileList"></div>
+
+    <div id="actionsBar" class="actions-bar" style="display:none;">
+      <button class="btn btn-ghost" id="clearBtn">Clear all</button>
+      <button class="btn btn-primary" id="downloadAllBtn">Download all</button>
+    </div>
+
+    <div id="totalStat" class="stat" style="display:none;">
+      <span class="stat-label">Total saved</span>
+      <span class="stat-val" id="totalSaved">—</span>
+    </div>
+  </div>
+
+  <p class="header-sub" style="text-align:center; font-size:11px; margin-top:24px;">
+    All processing happens in your browser. Photos never leave your device.
+  </p>
+</div>
+
+<script>
+const PRESETS = [
+  { id: 'feed', name: 'Feed photo', dim: '2048px long edge', mode: 'fit', size: 2048 },
+  { id: 'story', name: 'Story / Reel', dim: '1080×1920 fit', mode: 'fit', size: 1920, maxW: 1080 },
+  { id: 'cover', name: 'Cover photo', dim: '851×315 crop', mode: 'cover', w: 851, h: 315 },
+  { id: 'profile', name: 'Profile photo', dim: '720×720 square', mode: 'cover', w: 720, h: 720 },
+];
+
+let selectedPreset = PRESETS[0];
+let quality = 0.88;
+let files = []; // { id, original: File, processed: Blob, processedUrl, origSize, newSize, name, dims }
+
+// Build presets
+const presetsEl = document.getElementById('presets');
+PRESETS.forEach((p, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'preset' + (i === 0 ? ' active' : '');
+  btn.dataset.id = p.id;
+  btn.innerHTML = `<span class="preset-name">${p.name}</span><span class="preset-dim">${p.dim}</span>`;
+  btn.addEventListener('click', () => {
+    selectedPreset = p;
+    document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    reprocessAll();
+  });
+  presetsEl.appendChild(btn);
+});
+
+// Quality slider
+const qualityEl = document.getElementById('quality');
+const qualityValEl = document.getElementById('qualityVal');
+qualityEl.addEventListener('input', () => {
+  qualityValEl.textContent = qualityEl.value;
+  quality = qualityEl.value / 100;
+});
+qualityEl.addEventListener('change', () => reprocessAll());
+
+// File input + dropzone
+const fileInput = document.getElementById('fileInput');
+const dropzone = document.getElementById('dropzone');
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); e.stopPropagation();
+  dropzone.classList.add('over');
+}));
+['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); e.stopPropagation();
+  dropzone.classList.remove('over');
+}));
+dropzone.addEventListener('drop', e => {
+  if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+});
+
+async function handleFiles(fileList) {
+  for (const f of fileList) {
+    if (!f.type.startsWith('image/') && !/\.(heic|heif)$/i.test(f.name)) continue;
+    const id = Date.now() + Math.random();
+    files.push({ id, original: f, processed: null, processedUrl: null, origSize: f.size, newSize: 0, name: f.name, dims: '' });
+  }
+  renderFiles();
+  // Process new ones
+  for (const item of files.filter(f => !f.processed)) {
+    await processFile(item);
+    renderFiles();
+  }
+  updateTotals();
+}
+
+async function processFile(item) {
+  try {
+    let bitmap;
+    try {
+      bitmap = await createImageBitmap(item.original, { imageOrientation: 'from-image' });
+    } catch (err) {
+      // Fallback for HEIC or unsupported formats
+      const img = await loadImageFallback(item.original);
+      bitmap = img;
+    }
+
+    const { canvas, dims } = resizeToCanvas(bitmap, selectedPreset);
+    item.dims = dims;
+
+    const blob = await new Promise(resolve =>
+      canvas.toBlob(resolve, 'image/jpeg', quality)
+    );
+    if (item.processedUrl) URL.revokeObjectURL(item.processedUrl);
+    item.processed = blob;
+    item.processedUrl = URL.createObjectURL(blob);
+    item.newSize = blob.size;
+  } catch (err) {
+    console.error('Failed to process', item.name, err);
+    item.error = err.message || 'Could not process';
+  }
+}
+
+function loadImageFallback(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image not supported in this browser (HEIC may need conversion)')); };
+    img.src = url;
+  });
+}
+
+function resizeToCanvas(bitmap, preset) {
+  const srcW = bitmap.width;
+  const srcH = bitmap.height;
+  let targetW, targetH, sx = 0, sy = 0, sw = srcW, sh = srcH;
+
+  if (preset.mode === 'fit') {
+    // Fit within max dimension(s)
+    const maxLong = preset.size;
+    const maxW = preset.maxW || maxLong;
+    const maxH = preset.size;
+    let scale;
+    if (preset.id === 'feed') {
+      // Long edge cap
+      scale = Math.min(1, maxLong / Math.max(srcW, srcH));
+    } else {
+      // Story/Reel: cap by either dimension
+      scale = Math.min(1, maxW / srcW, maxH / srcH);
+    }
+    targetW = Math.round(srcW * scale);
+    targetH = Math.round(srcH * scale);
+  } else if (preset.mode === 'cover') {
+    // Center-crop then fit
+    targetW = preset.w;
+    targetH = preset.h;
+    const srcAspect = srcW / srcH;
+    const dstAspect = targetW / targetH;
+    if (srcAspect > dstAspect) {
+      // Source wider than dest - crop sides
+      sh = srcH;
+      sw = Math.round(srcH * dstAspect);
+      sx = Math.round((srcW - sw) / 2);
+      sy = 0;
+    } else {
+      // Source taller - crop top/bottom
+      sw = srcW;
+      sh = Math.round(srcW / dstAspect);
+      sx = 0;
+      sy = Math.round((srcH - sh) / 2);
+    }
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff'; // for PNG transparency -> JPEG
+  ctx.fillRect(0, 0, targetW, targetH);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, targetW, targetH);
+
+  return { canvas, dims: `${targetW}×${targetH}` };
+}
+
+async function reprocessAll() {
+  if (!files.length) return;
+  for (const item of files) {
+    item.processed = null;
+  }
+  renderFiles();
+  for (const item of files) {
+    await processFile(item);
+    renderFiles();
+  }
+  updateTotals();
+}
+
+const fileListEl = document.getElementById('fileList');
+const actionsBar = document.getElementById('actionsBar');
+const totalStatEl = document.getElementById('totalStat');
+const totalSavedEl = document.getElementById('totalSaved');
+
+function renderFiles() {
+  fileListEl.innerHTML = '';
+  if (!files.length) {
+    actionsBar.style.display = 'none';
+    totalStatEl.style.display = 'none';
+    return;
+  }
+  actionsBar.style.display = 'flex';
+
+  files.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'file-item';
+    const savedPct = item.processed ? Math.max(0, Math.round((1 - item.newSize / item.origSize) * 100)) : 0;
+    el.innerHTML = `
+      <img class="thumb" src="${item.processedUrl || ''}" alt="" />
+      <div class="file-info">
+        <div class="file-name">${escapeHtml(item.name)}</div>
+        <div class="meta">
+          ${item.error
+            ? `<span style="color:#e34c4c;">⚠ ${escapeHtml(item.error)}</span>`
+            : item.processed
+              ? `${formatSize(item.origSize)} <span class="arrow">→</span> ${formatSize(item.newSize)} · ${item.dims} <span class="saved">−${savedPct}%</span>`
+              : `<span class="spinner"></span> Processing…`
+          }
+        </div>
+      </div>
+      <div class="file-actions">
+        ${item.processed ? `<button class="btn btn-primary" data-action="download" data-id="${item.id}">Save</button>` : ''}
+        <button class="btn-icon" data-action="remove" data-id="${item.id}" title="Remove">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    `;
+    fileListEl.appendChild(el);
+  });
+}
+
+fileListEl.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const id = parseFloat(btn.dataset.id);
+  const item = files.find(f => f.id === id);
+  if (!item) return;
+  if (btn.dataset.action === 'download') downloadOne(item);
+  if (btn.dataset.action === 'remove') {
+    if (item.processedUrl) URL.revokeObjectURL(item.processedUrl);
+    files = files.filter(f => f.id !== id);
+    renderFiles();
+    updateTotals();
+  }
+});
+
+document.getElementById('downloadAllBtn').addEventListener('click', async () => {
+  for (const item of files) {
+    if (item.processed) {
+      downloadOne(item);
+      // Small delay so browsers don't block
+      await new Promise(r => setTimeout(r, 200));
+    }
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  files.forEach(item => item.processedUrl && URL.revokeObjectURL(item.processedUrl));
+  files = [];
+  renderFiles();
+  updateTotals();
+});
+
+function downloadOne(item) {
+  const a = document.createElement('a');
+  a.href = item.processedUrl;
+  const base = item.name.replace(/\.[^.]+$/, '');
+  a.download = `${base}-fb-${selectedPreset.id}.jpg`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function updateTotals() {
+  const processed = files.filter(f => f.processed);
+  if (!processed.length) {
+    totalStatEl.style.display = 'none';
+    return;
+  }
+  const origTotal = processed.reduce((s, f) => s + f.origSize, 0);
+  const newTotal = processed.reduce((s, f) => s + f.newSize, 0);
+  const saved = origTotal - newTotal;
+  if (saved <= 0) {
+    totalStatEl.style.display = 'none';
+    return;
+  }
+  totalStatEl.style.display = 'flex';
+  totalSavedEl.textContent = `${formatSize(saved)} (${Math.round(saved / origTotal * 100)}%)`;
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+</script>
+</body>
+</html>
